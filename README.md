@@ -24,9 +24,18 @@ It uses cost explorer APIs to get your bill details and then sends them using SN
 
 **How to set it up**
 
- 1. Create a python lambda function
- 2. Add the environment variables : sns_topic and subject. sns_topic is the ARN of the sns topic to send notifications to. subject is the subject of the message with your billing details
- 3. Schedule the lambda function to run periodically using CloudWatch events
+ - Create a python lambda function
+ - Initialize the environment variables
+ - Schedule the lambda function to run periodically using CloudWatch events
+
+**Environment Variables**
+
+ - currency : name of your local currency e.g kshs
+ - dollar_exchange_rate  : the function converts from dollars to your local currency
+ - sns_topic : arn of your sns topic
+ - subject : subject of the message that is sent
+
+
 
 
 
