@@ -15,6 +15,7 @@ This python lambda function periodically sends you billing notifications.
 This helps you keep track of your AWS spending in order to avoid surprises at the end of the month
 
 **How It Works**
+
 It uses cost explorer APIs to get your bill details and then sends them using SNS.
 
 **IAM Permissions Required**
