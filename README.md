@@ -35,7 +35,9 @@ It uses cost explorer APIs to get your bill details and then sends them using SN
  - sns_topic : arn of your sns topic
  - subject : subject of the message that is sent
  
- # Welcome to My AWS Playground
+
+
+
 
 ***Codepipline that pushes code to cpanel on repository commit***
 
