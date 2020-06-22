@@ -1,6 +1,6 @@
 # Welcome to My AWS PlayGround
 
-***aws_bill_notifications_lambda.py***
+# ***aws_bill_notifications_lambda.py***
 
 This python lambda function periodically sends you billing notifications.
 
