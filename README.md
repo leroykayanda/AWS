@@ -49,7 +49,7 @@ It uses cost explorer APIs to get your bill details and then sends them using SN
  4. The code now needs to be pushed to cpanel. Set up an S3 events that monitors for new object creation. When code is pushed, set the event to invoke a lambda function.
  5. The Lambda will fetch the code from S3 and store it in its /tmp directory which is limited to 512 mb. The lambda will unzip the code and push it to cpanel using FTP. FTP credentials are fetched from the AWS Parameter Store. Lambda can then inform you via SNS when the code has been successfully pushed. Lambda has a maximum running time of 15 minutes. 
 
-***lambda - codepipeline_cpanel_push_lambda.py***
+# ***lambda - codepipeline_cpanel_push_lambda.py***
 
 **IAM Permissions Required**
  - cloudwatch
