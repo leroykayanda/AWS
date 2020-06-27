@@ -74,7 +74,7 @@ It uses cost explorer APIs to get your bill details and then sends them using SN
 **Cost of the solution**
 
  - Codepipeline - $1 per month per active pipeline
- - Codebuild - $0.05 per build minute ( using 3 GB Mem and 2 vCPU)
+ - Codebuild - $0.005 per build minute ( using 3 GB Mem and 2 vCPU)
  - S3 - $0.023 per GB
  - Cloudwatch logs - $0.57 per GB
  - Cloudwatch events - $1.00 per million events
