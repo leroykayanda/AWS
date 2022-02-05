@@ -1,4 +1,4 @@
-**Bill Notifications **
+**Bill Notifications**
 
 A lambda function that will periodically send you AWS bill notifications to help keep your expenses in check. Blog post for this is [here](https://dev.to/leroykayanda/a-lambda-that-sends-daily-aws-bill-notifications-1dij).
 
