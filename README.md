@@ -18,6 +18,40 @@ Automatically build your code and deploy to cpanel via FTP or to other servers v
 
 A lambda function that sends a slack message to a channel when a user logs in to the AWS console without using MFA. There is also a function to send a message when a the root user logs in.
 
+The IAM policy below can be used to block console and AWS CLI requests that do not use MFA.
+
+    {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "BlockMostAccessUnlessSignedInWithMFA",
+                "Effect": "Deny",
+                "NotAction": [
+                    "iam:CreateVirtualMFADevice",
+                    "iam:DeleteVirtualMFADevice",
+                    "iam:ListVirtualMFADevices",
+                    "iam:EnableMFADevice",
+                    "iam:ResyncMFADevice",
+                    "iam:ListAccountAliases",
+                    "iam:ListUsers",
+                    "iam:ListSSHPublicKeys",
+                    "iam:ListAccessKeys",
+                    "iam:ListServiceSpecificCredentials",
+                    "iam:ListMFADevices",
+                    "iam:GetAccountSummary",
+                    "sts:GetSessionToken"
+                ],
+                "Resource": "*",
+                "Condition": {
+                    "BoolIfExists": {
+                        "aws:MultiFactorAuthPresent": "false",
+                        "aws:ViaAWSService": "false"
+                    }
+                }
+            }
+        ]
+    }
+
 **Root Login**
 
 A lambda function that sends a slack message to a channel when the root user logs in.
