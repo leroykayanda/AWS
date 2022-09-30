@@ -5,8 +5,11 @@ from dateutil import relativedelta
 import os
 import urllib3
 http = urllib3.PoolManager()
+import datetime as dt
+import calendar
 
 dollar_exchange_rate = float(os.environ['dollar_exchange_rate'])
+client = boto3.client('ce')
 
 
 def lambda_handler(event, context):
@@ -15,12 +18,9 @@ def lambda_handler(event, context):
 
 
 def getMonthBill():
-    client = boto3.client('ce')
 
     today = datetime.today()
-    start_date = datetime.strftime(
-        today + relativedelta.relativedelta(day=1), '%Y-%m-%d')
-
+    start_date = datetime.strftime(today + relativedelta.relativedelta(day=1), '%Y-%m-%d')
     end_date = datetime.strftime(datetime.now() + timedelta(1), '%Y-%m-%d')
 
     response = client.get_cost_and_usage(
@@ -55,21 +55,19 @@ def getMonthBill():
             }
         }
     )
-    # print(response)
 
     month_to_date_bill = round(float(
         response["ResultsByTime"][0]['Total']["NetUnblendedCost"]["Amount"]) * dollar_exchange_rate)
     #print("To date: " + str(month_to_date_bill))
     return month_to_date_bill
-    # return response
 
 
 def getYesterdayBill():
-    client = boto3.client('ce')
-
+    
     start_date = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
     end_date = datetime.strftime(datetime.now(), '%Y-%m-%d')
-
+    #print(start_date)
+    
     response = client.get_cost_and_usage(
         TimePeriod={
             'Start': start_date,
@@ -102,28 +100,20 @@ def getYesterdayBill():
             }
         }
     )
-    # print(response)
 
     yesterdays_bill = round(float(
         response["ResultsByTime"][0]["Total"]["NetUnblendedCost"]["Amount"]))*dollar_exchange_rate
 
     #print("Yesterday: " + str(yesterdays_bill))
     return yesterdays_bill
-    # return response
 
 
 def predictedBill():
-    client = boto3.client('ce')
 
-    client = boto3.client('ce')
-    start_date = datetime.strftime(datetime.now() + timedelta(1), '%Y-%m-%d')
-
-    today = datetime.today()
-
-    # start_date = datetime.strftime( today + relativedelta.relativedelta(day=1) , '%Y-%m-%d')
-    end_date = datetime.strftime(
-        today + relativedelta.relativedelta(months=1, day=1), '%Y-%m-%d')
-
+    today = dt.date.today()
+    start_date = datetime.strftime( today, '%Y-%m-%d' )
+    end_date = datetime.strftime( dt.date(today.year, today.month+1, 1), '%Y-%m-%d' )
+    
     response = client.get_cost_forecast(
         TimePeriod={
             'Start': start_date,
@@ -154,20 +144,18 @@ def predictedBill():
             }
         }
     )
-    # print(response)
 
     predicted = round(
         float(response['Total']['Amount']) * dollar_exchange_rate)
 
     #print("Predicted: " + str(predicted))
     return predicted
-    # return response
 
 
 def sendEmail():
     currency = os.environ['currency']
-
     client = boto3.client('sns')
+    
     msg = "AWS Bill\n\nYesterday Usage : "+currency+" " + format(int(getYesterdayBill()), ',d') + " \n\nMonth To Date Bill : "+currency+" " + format(
         int(getMonthBill()), ',d') + " \n\nForecasted Bill : "+currency+" " + format(int(predictedBill()), ',d')
 
@@ -180,6 +168,7 @@ def sendEmail():
     }
 
     encoded_msg = json.dumps(msg).encode('utf-8')
+    
     resp = http.request('POST', slack_webhook, body=encoded_msg)
     print({
         "message": msg,
@@ -191,5 +180,5 @@ def sendEmail():
 # sendEmail()
 # export currency = "$"
 # export dollar_exchange_rate = 1
-# export slack_webhook=""
+# export slack_webhook="https://hooks.slack.com/services/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"
 # export subject = "AWS Bill"
