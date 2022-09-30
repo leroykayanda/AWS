@@ -175,10 +175,3 @@ def sendEmail():
         "status_code": resp.status,
         "response": resp.data
     })
-
-
-# sendEmail()
-# export currency = "$"
-# export dollar_exchange_rate = 1
-# export slack_webhook="https://hooks.slack.com/services/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"
-# export subject = "AWS Bill"
