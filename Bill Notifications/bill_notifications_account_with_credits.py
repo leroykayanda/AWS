@@ -14,7 +14,6 @@ client = boto3.client('ce')
 
 def lambda_handler(event, context):
     sendEmail()
-    # return predictedBill()
 
 
 def getMonthBill():
@@ -112,7 +111,16 @@ def predictedBill():
 
     today = dt.date.today()
     start_date = datetime.strftime( today, '%Y-%m-%d' )
-    end_date = datetime.strftime( dt.date(today.year, today.month+1, 1), '%Y-%m-%d' )
+    
+    month = today.month+1
+    year = today.year
+    
+    if(month == 13):
+        #if in Dec, set end date to be 1st Jan of the next year
+        month = 1
+        year += 1
+    
+    end_date = datetime.strftime( dt.date(year, month, 1), '%Y-%m-%d' )
     
     response = client.get_cost_forecast(
         TimePeriod={
