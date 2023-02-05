@@ -55,3 +55,12 @@ The IAM policy below can be used to block console and AWS CLI requests that do n
 **Root Login**
 
 A lambda function that sends a slack message to a channel when the root user logs in.
+
+**DB back up script**
+
+This script backs up a postgres database to S3.
+
+To restore the database
+
+    export PGPASSWORD="hdvhdbhdv"
+    pg_restore -U <db  user> -h <db  host> -d <db  name>  <name  of  the  backup  file>
