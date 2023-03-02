@@ -38,7 +38,7 @@ def lambda_handler(event, context):
         msg = "The root user has logged in to the AWS console without MFA at " + eventTime + " from IP " + sourceIPAddress + ". Please follow <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html | this guide> to set up MFA."
     else:
         userName = event['userIdentity']['userName']
-        msg = userName + " has logged in to the AWS console without MFA at " + eventTime + " from IP " + sourceIPAddress + ". Please follow <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html | this guide> to set up MFA."
+        msg = userName + " has logged in to the AWS console without MFA at " + eventTime + " from IP " + sourceIPAddress + ". Please follow <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html | this guide> to set up MFA. Access to services will be blocked until this is done."
     
     #print(msg)
     
