@@ -7,13 +7,18 @@ import urllib3
 http = urllib3.PoolManager()
 import datetime as dt
 import calendar
+import botocore
+
+client = boto3.client('ce')
 
 dollar_exchange_rate = float(os.environ['dollar_exchange_rate'])
-client = boto3.client('ce')
+currency = os.environ['currency']
+sns_client = boto3.client('sns')
 
 
 def lambda_handler(event, context):
     sendEmail()
+    #predictedBill()
 
 
 def getMonthBill():
@@ -57,7 +62,7 @@ def getMonthBill():
 
     month_to_date_bill = round(float(
         response["ResultsByTime"][0]['Total']["NetUnblendedCost"]["Amount"]) * dollar_exchange_rate)
-    #print("To date: " + str(month_to_date_bill))
+    print("To date: " + str(month_to_date_bill))
     return month_to_date_bill
 
 
@@ -65,7 +70,6 @@ def getYesterdayBill():
     
     start_date = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
     end_date = datetime.strftime(datetime.now(), '%Y-%m-%d')
-    #print(start_date)
     
     response = client.get_cost_and_usage(
         TimePeriod={
@@ -103,7 +107,7 @@ def getYesterdayBill():
     yesterdays_bill = round(float(
         response["ResultsByTime"][0]["Total"]["NetUnblendedCost"]["Amount"]))*dollar_exchange_rate
 
-    #print("Yesterday: " + str(yesterdays_bill))
+    print("Yesterday: " + str(yesterdays_bill))
     return yesterdays_bill
 
 
@@ -122,50 +126,53 @@ def predictedBill():
     
     end_date = datetime.strftime( dt.date(year, month, 1), '%Y-%m-%d' )
     
-    response = client.get_cost_forecast(
-        TimePeriod={
-            'Start': start_date,
-            'End': end_date
-        },
-        Metric='NET_UNBLENDED_COST',
-        Granularity='MONTHLY',
-        Filter={
-            'Not': {
-                'Or': [
-                    {
-                        'Dimensions': {
-                            'Key': 'RECORD_TYPE',
-                            'Values': [
-                                'Credit'
-                            ]
+    try:
+        response = client.get_cost_forecast(
+            TimePeriod={
+                'Start': start_date,
+                'End': end_date
+            },
+            Metric='NET_UNBLENDED_COST',
+            Granularity='MONTHLY',
+            Filter={
+                'Not': {
+                    'Or': [
+                        {
+                            'Dimensions': {
+                                'Key': 'RECORD_TYPE',
+                                'Values': [
+                                    'Credit'
+                                ]
+                            }
+                        },
+                        {
+                            'Dimensions': {
+                                'Key': 'RECORD_TYPE',
+                                'Values': [
+                                    'Refund'
+                                ]
+                            }
                         }
-                    },
-                    {
-                        'Dimensions': {
-                            'Key': 'RECORD_TYPE',
-                            'Values': [
-                                'Refund'
-                            ]
-                        }
-                    }
-                ]
+                    ]
+                }
             }
-        }
-    )
+        )
 
-    predicted = round(
-        float(response['Total']['Amount']) * dollar_exchange_rate)
+        predicted = round(
+            float(response['Total']['Amount']) * dollar_exchange_rate)
 
-    #print("Predicted: " + str(predicted))
-    return predicted
+        print("Predicted: " + str(predicted))
+        return currency + " " + format(int(predicted), ',d')
+    
+    except botocore.exceptions.ClientError as e:
+        print(str(e))
+        return str(e)
 
 
 def sendEmail():
-    currency = os.environ['currency']
-    client = boto3.client('sns')
     
     msg = "AWS Bill\n\nYesterday Usage : "+currency+" " + format(int(getYesterdayBill()), ',d') + " \n\nMonth To Date Bill : "+currency+" " + format(
-        int(getMonthBill()), ',d') + " \n\nForecasted Bill : "+currency+" " + format(int(predictedBill()), ',d')
+        int(getMonthBill()), ',d') + " \n\nForecasted Bill : "+ predictedBill()
 
     slack_webhook = os.environ['slack_webhook']
 
@@ -183,3 +190,5 @@ def sendEmail():
         "status_code": resp.status,
         "response": resp.data
     })
+    
+    
