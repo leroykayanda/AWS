@@ -54,6 +54,8 @@ The IAM policy below can be used to block console and AWS CLI requests that do n
 
 **Root Login**
 
+*Non MFA Login/root_login.py*
+
 A lambda function that sends a slack message to a channel when the root user logs in.
 
 **DB back up script**
