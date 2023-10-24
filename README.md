@@ -64,3 +64,9 @@ To restore the database
 
     export PGPASSWORD="hdvhdbhdv"
     pg_restore -U <db  user> -h <db  host> -d <db  name>  <name  of  the  backup  file>
+
+
+**Process Cloudwatch Logs**
+*Misc/decrypt-cloudwatch-logs-lambda.py*
+
+Processes cloudwatch logs using a lambda function
