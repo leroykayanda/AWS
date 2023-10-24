@@ -67,6 +67,7 @@ To restore the database
 
 
 **Process Cloudwatch Logs**
+
 *Misc/decrypt-cloudwatch-logs-lambda.py*
 
 Processes cloudwatch logs using a lambda function
