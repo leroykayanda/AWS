@@ -58,6 +58,8 @@ A lambda function that sends a slack message to a channel when the root user log
 
 **DB back up script**
 
+*Misc/postgres_db_backup.py*
+
 This script backs up a postgres database to S3.
 
 To restore the database
