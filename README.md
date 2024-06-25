@@ -1,13 +1,8 @@
 **Bill Notifications**
 
-*bill_notifications_account_with_credits.py*
+*bill_notifications.py*
 
 A lambda function that will periodically send you AWS bill notifications to help keep your expenses in check. Blog post for this is [here](https://dev.to/leroykayanda/a-lambda-that-sends-daily-aws-bill-notifications-1dij).
-
-
-*bill_notifications_account_with_credits.py*
-
-Use this if your account has credits.
 
 
 **A CICD pipeline for cpanel and other servers**
