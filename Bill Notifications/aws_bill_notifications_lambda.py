@@ -3,22 +3,22 @@ import json
 from datetime import datetime, timedelta
 from dateutil import relativedelta
 import os
+import urllib3
+http = urllib3.PoolManager()
+import datetime as dt
+import calendar
 
-dollar_exchange_rate = float(os.environ['dollar_exchange_rate'])
+dollar_exchange_rate=float( os.environ['dollar_exchange_rate'] )
+client = boto3.client('ce')
 
-
-def lambda_handler(event, context):
+def lambda_handler(event, context):  
     sendEmail()
-    # return predictedBill()
-
-
+    #return getYesterdayBill()
+    
 def getMonthBill():
-    client = boto3.client('ce')
 
     today = datetime.today()
-    start_date = datetime.strftime(
-        today + relativedelta.relativedelta(day=1), '%Y-%m-%d')
-
+    start_date = datetime.strftime(today + relativedelta.relativedelta(day=1), '%Y-%m-%d')
     end_date = datetime.strftime(datetime.now() + timedelta(1), '%Y-%m-%d')
 
     response = client.get_cost_and_usage(
@@ -28,27 +28,22 @@ def getMonthBill():
         },
         Granularity='MONTHLY',
         Metrics=[
-            'UnblendedCost'
-        ],
-        GroupBy=[{
-            'Type': 'DIMENSION',
-            'Key': 'LEGAL_ENTITY_NAME'
-        }
+            'NetUnblendedCost'
         ]
     )
 
     month_to_date_bill = round(float(
-        response["ResultsByTime"][0]['Groups'][0]["Metrics"]["UnblendedCost"]["Amount"]) * dollar_exchange_rate)
+        response["ResultsByTime"][0]['Total']["NetUnblendedCost"]["Amount"]) * dollar_exchange_rate)
+    #print("To date: " + str(month_to_date_bill))
     return month_to_date_bill
-    # return response
 
 
 def getYesterdayBill():
-    client = boto3.client('ce')
-
+    
     start_date = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
     end_date = datetime.strftime(datetime.now(), '%Y-%m-%d')
-
+    #print(start_date)
+    
     response = client.get_cost_and_usage(
         TimePeriod={
             'Start': start_date,
@@ -56,65 +51,59 @@ def getYesterdayBill():
         },
         Granularity='MONTHLY',
         Metrics=[
-            'UnblendedCost'
-        ],
-        GroupBy=[{
-            'Type': 'DIMENSION',
-            'Key': 'LEGAL_ENTITY_NAME'
-        }
+            'NetUnblendedCost'
         ]
     )
 
     yesterdays_bill = round(float(
-        response["ResultsByTime"][0]["Groups"][0]['Metrics']["UnblendedCost"]["Amount"]))*dollar_exchange_rate
+        response["ResultsByTime"][0]["Total"]["NetUnblendedCost"]["Amount"]))*dollar_exchange_rate
+
+    #print("Yesterday: " + str(yesterdays_bill))
     return yesterdays_bill
-    # return response
 
 
 def predictedBill():
-    client = boto3.client('ce')
 
-    client = boto3.client('ce')
-    start_date = datetime.strftime(datetime.now() + timedelta(1), '%Y-%m-%d')
-
-    today = datetime.today()
-
-    #start_date = datetime.strftime( today + relativedelta.relativedelta(day=1) , '%Y-%m-%d')
-    end_date = datetime.strftime(
-        today + relativedelta.relativedelta(months=1, day=1), '%Y-%m-%d')
-
+    today = dt.date.today()
+    start_date = datetime.strftime( today, '%Y-%m-%d' )
+    
+    month = today.month+1
+    year = today.year
+    
+    if(month == 13):
+        #if in Dec, set end date to be 1st Jan of the next year
+        month = 1
+        year += 1
+    
+    end_date = datetime.strftime( dt.date(year, month, 1), '%Y-%m-%d' )
+    
     response = client.get_cost_forecast(
         TimePeriod={
             'Start': start_date,
             'End': end_date
         },
-        Metric='UNBLENDED_COST',
+        Metric='NetUnblendedCost',
         Granularity='MONTHLY'
     )
 
-    return round(float(response['Total']['Amount']) * dollar_exchange_rate)
-    # return response
+    predicted = round(
+        float(response['Total']['Amount']) * dollar_exchange_rate)
 
-
+    #print("Predicted: " + str(predicted))
+    return predicted
+    
 def sendEmail():
-    currency = os.environ['currency']
-
+    currency=os.environ['currency']
+    
     client = boto3.client('sns')
-    msg = "AWS Account\n\nYesterday Usage : "+currency+" " + format(int(getYesterdayBill()), ',d') + " \n\nMonth To Date Bill : "+currency+" " + format(
-        int(getMonthBill()), ',d') + " \n\nForecasted Bill : "+currency+" " + format(int(predictedBill()), ',d')
-
-    sns_topic = os.environ['sns_topic']
-    subject = os.environ['subject']
-
+    msg="AWS Personal Account\n\nYesterday Usage : "+currency+" "+ format( int( getYesterdayBill() ) ,',d' ) +" \n\nMonth To Date Bill : "+currency+" "+ format( int( getMonthBill() )  ,',d' )  +" \n\nForecasted Bill : "+currency+" "+ format( int( predictedBill() )  ,',d' ) 
+    
+    sns_topic=os.environ['sns_topic']
+    subject=os.environ['subject']
+	
     response = client.publish(
-        TopicArn=sns_topic,
-        Message=msg,
-        Subject=subject
+    TopicArn=sns_topic,
+    Message=msg,
+    Subject=subject
     )
-
-
-sendEmail()
-# export currency = "$"
-# export dollar_exchange_rate = 1
-# export sns_topic = ""
-# export subject = "AWS Bill"
+    
