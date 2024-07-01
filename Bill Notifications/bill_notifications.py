@@ -82,7 +82,7 @@ def predictedBill():
             'Start': start_date,
             'End': end_date
         },
-        Metric='NetUnblendedCost',
+        Metric='NET_UNBLENDED_COST',
         Granularity='MONTHLY'
     )
 
