@@ -14,6 +14,34 @@ client = boto3.client('ce')
 def lambda_handler(event, context):  
     sendEmail()
     #return getYesterdayBill()
+
+def getYesterdayBill():
+    
+    start_date = datetime.strftime(datetime.now() - timedelta(2), '%Y-%m-%d')
+    end_date = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
+    #print(start_date)
+    
+    response = client.get_cost_and_usage(
+        TimePeriod={
+            'Start': start_date,
+            'End': end_date
+        },
+        Granularity='MONTHLY',
+        Metrics=[
+            'NetUnblendedCost'
+        ]
+    )
+
+    yesterdays_bill = round(
+        float(
+        response["ResultsByTime"][0]["Total"]["NetUnblendedCost"]["Amount"]
+        )
+        * dollar_exchange_rate
+        )
+
+    print("Yesterday: " + str(yesterdays_bill))
+    print(response)
+    return yesterdays_bill
     
 def getMonthBill():
 
@@ -32,35 +60,13 @@ def getMonthBill():
         ]
     )
 
-    month_to_date_bill = round(float(
-        response["ResultsByTime"][0]['Total']["NetUnblendedCost"]["Amount"]) * dollar_exchange_rate)
+    month_to_date_bill = round(
+        float(
+        response["ResultsByTime"][0]['Total']["NetUnblendedCost"]["Amount"]
+        ) * dollar_exchange_rate
+        )
     #print("To date: " + str(month_to_date_bill))
     return month_to_date_bill
-
-
-def getYesterdayBill():
-    
-    start_date = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
-    end_date = datetime.strftime(datetime.now(), '%Y-%m-%d')
-    #print(start_date)
-    
-    response = client.get_cost_and_usage(
-        TimePeriod={
-            'Start': start_date,
-            'End': end_date
-        },
-        Granularity='MONTHLY',
-        Metrics=[
-            'NetUnblendedCost'
-        ]
-    )
-
-    yesterdays_bill = round(float(
-        response["ResultsByTime"][0]["Total"]["NetUnblendedCost"]["Amount"]))*dollar_exchange_rate
-
-    #print("Yesterday: " + str(yesterdays_bill))
-    return yesterdays_bill
-
 
 def predictedBill():
 
@@ -87,7 +93,8 @@ def predictedBill():
     )
 
     predicted = round(
-        float(response['Total']['Amount']) * dollar_exchange_rate)
+        float(response['Total']['Amount']) * dollar_exchange_rate
+        )
 
     #print("Predicted: " + str(predicted))
     return predicted
@@ -107,24 +114,3 @@ def sendEmail():
     Subject=subject
     )
     
-def send_slack_msg():
-    
-    msg = "AWS Bill\n\nYesterday Usage : "+currency+" " + format(int(getYesterdayBill()), ',d') + " \n\nMonth To Date Bill : "+currency+" " + format(
-        int(getMonthBill()), ',d') + " \n\nForecasted Bill : "+ predictedBill()
-
-    slack_webhook = os.environ['slack_webhook']
-
-    print(msg)
-
-    msg = {
-        "text": msg
-    }
-
-    encoded_msg = json.dumps(msg).encode('utf-8')
-    
-    resp = http.request('POST', slack_webhook, body=encoded_msg)
-    print({
-        "message": msg,
-        "status_code": resp.status,
-        "response": resp.data
-    })
